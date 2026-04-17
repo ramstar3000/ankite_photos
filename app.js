@@ -1,6 +1,5 @@
 import { S3Client, PutObjectCommand, DeleteObjectCommand } from "@aws-sdk/client-s3";
-import { fromCognitoIdentityPool } from "@aws-sdk/credential-provider-cognito-identity";
-import { CognitoIdentityClient } from "@aws-sdk/client-cognito-identity";
+import { CognitoIdentityClient, GetIdCommand, GetCredentialsForIdentityCommand } from "@aws-sdk/client-cognito-identity";
 
 // ===== CONFIGURATION — edit these values =====
 const CONFIG = {
@@ -45,16 +44,37 @@ function showToast(message, type = "success", duration = 4000) {
   toastTimer = setTimeout(() => { toast.className = "hidden"; }, duration);
 }
 
-// ===== S3 Client (lazy init) =====
-function getS3Client() {
-  if (!s3Client) {
-    s3Client = new S3Client({
-      region: CONFIG.REGION,
-      credentials: fromCognitoIdentityPool({
-        client: new CognitoIdentityClient({ region: CONFIG.REGION }),
-        identityPoolId: CONFIG.IDENTITY_POOL_ID,
-      }),
-    });
+// ===== Cognito Credentials (manual, no fs dependency) =====
+let cachedCredentials = null;
+let credentialsExpiry = 0;
+
+async function getCognitoCredentials() {
+  if (cachedCredentials && Date.now() < credentialsExpiry) {
+    return cachedCredentials;
+  }
+  const cognitoClient = new CognitoIdentityClient({ region: CONFIG.REGION });
+  const { IdentityId } = await cognitoClient.send(
+    new GetIdCommand({ IdentityPoolId: CONFIG.IDENTITY_POOL_ID })
+  );
+  const { Credentials } = await cognitoClient.send(
+    new GetCredentialsForIdentityCommand({ IdentityId })
+  );
+  cachedCredentials = {
+    accessKeyId: Credentials.AccessKeyId,
+    secretAccessKey: Credentials.SecretKey,
+    sessionToken: Credentials.SessionToken,
+  };
+  // Refresh 5 min before expiry
+  credentialsExpiry = Credentials.Expiration.getTime() - 5 * 60 * 1000;
+  return cachedCredentials;
+}
+
+// ===== S3 Client =====
+async function getS3Client() {
+  const credentials = await getCognitoCredentials();
+  // Recreate client if credentials were refreshed
+  if (!s3Client || Date.now() >= credentialsExpiry) {
+    s3Client = new S3Client({ region: CONFIG.REGION, credentials });
   }
   return s3Client;
 }
@@ -257,7 +277,8 @@ async function uploadFile(file) {
     Body: file,
     ContentType: file.type,
   });
-  await getS3Client().send(command);
+  const client = await getS3Client();
+  await client.send(command);
   saveToHistory({ name: file.name, size: file.size, key, uploadedAt: new Date().toISOString() });
 }
 
@@ -316,7 +337,8 @@ async function deleteUpload(index, key) {
   btn.disabled = true;
 
   try {
-    await getS3Client().send(new DeleteObjectCommand({ Bucket: CONFIG.BUCKET, Key: key }));
+    const client = await getS3Client();
+    await client.send(new DeleteObjectCommand({ Bucket: CONFIG.BUCKET, Key: key }));
   } catch (err) {
     console.warn("S3 delete failed (file may already be gone):", err);
   }
