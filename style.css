@@ -1,34 +1,40 @@
 :root {
   --primary: #4f46e5;
   --primary-hover: #4338ca;
+  --primary-light: #eef2ff;
   --success: #16a34a;
+  --success-light: #f0fdf4;
   --error: #dc2626;
-  --bg: #fafafa;
+  --error-light: #fef2f2;
+  --bg: #f8fafc;
   --surface: #ffffff;
-  --text: #1f2937;
-  --text-muted: #6b7280;
-  --border: #e5e7eb;
-  --radius: 12px;
+  --text: #1e293b;
+  --text-muted: #64748b;
+  --border: #e2e8f0;
+  --radius: 14px;
+  --shadow: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
+  --shadow-md: 0 4px 12px rgba(0,0,0,0.08);
 }
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
 
 body {
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-  background: var(--bg);
+  background: linear-gradient(135deg, #f8fafc 0%, #eef2ff 100%);
   color: var(--text);
   min-height: 100dvh;
   display: flex;
   justify-content: center;
+  padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
 }
 
 #app {
   width: 100%;
   max-width: 480px;
-  padding: 24px 16px;
+  padding: 24px 16px 40px;
 }
 
-/* Password Gate */
+/* ===== Password Gate ===== */
 #password-section {
   display: flex;
   flex-direction: column;
@@ -38,14 +44,29 @@ body {
   text-align: center;
 }
 
+.lock-icon {
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  background: var(--primary-light);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 20px;
+  color: var(--primary);
+}
+
 #password-section h1 {
   font-size: 1.75rem;
-  margin-bottom: 8px;
+  font-weight: 700;
+  margin-bottom: 6px;
+  letter-spacing: -0.02em;
 }
 
 #password-section p {
   color: var(--text-muted);
-  margin-bottom: 24px;
+  margin-bottom: 28px;
+  font-size: 0.95rem;
 }
 
 #password-form {
@@ -57,20 +78,22 @@ body {
 
 #password-input {
   flex: 1;
-  padding: 12px 16px;
+  padding: 14px 16px;
   border: 2px solid var(--border);
   border-radius: var(--radius);
   font-size: 1rem;
   outline: none;
-  transition: border-color 0.2s;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  background: var(--surface);
 }
 
 #password-input:focus {
   border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
 }
 
 #password-form button {
-  padding: 12px 24px;
+  padding: 14px 24px;
   background: var(--primary);
   color: white;
   border: none;
@@ -78,11 +101,15 @@ body {
   font-size: 1rem;
   font-weight: 600;
   cursor: pointer;
-  transition: background 0.2s;
+  transition: background 0.2s, transform 0.1s;
 }
 
 #password-form button:hover {
   background: var(--primary-hover);
+}
+
+#password-form button:active {
+  transform: scale(0.97);
 }
 
 .error {
@@ -91,7 +118,19 @@ body {
   margin-top: 12px;
 }
 
-/* Upload Section */
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  20% { transform: translateX(-8px); }
+  40% { transform: translateX(8px); }
+  60% { transform: translateX(-6px); }
+  80% { transform: translateX(6px); }
+}
+
+#password-form.shake {
+  animation: shake 0.4s ease;
+}
+
+/* ===== Upload Section ===== */
 #event-info {
   text-align: center;
   margin-bottom: 24px;
@@ -99,44 +138,92 @@ body {
 
 #event-info h1 {
   font-size: 1.5rem;
-  margin-bottom: 8px;
+  font-weight: 700;
+  margin-bottom: 6px;
+  letter-spacing: -0.02em;
 }
 
 #event-info p {
   color: var(--text-muted);
   line-height: 1.5;
+  font-size: 0.9rem;
 }
 
-/* Drop Zone */
+/* ===== Drop Zone ===== */
 #drop-zone {
   border: 2px dashed var(--border);
   border-radius: var(--radius);
-  padding: 40px 20px;
+  padding: 36px 20px;
   text-align: center;
   cursor: pointer;
-  transition: border-color 0.2s, background 0.2s;
+  transition: border-color 0.2s, background 0.2s, transform 0.2s;
   color: var(--text-muted);
+  background: var(--surface);
+}
+
+#drop-zone:hover {
+  border-color: var(--primary);
+  background: var(--primary-light);
 }
 
 #drop-zone.dragover {
   border-color: var(--primary);
-  background: #eef2ff;
+  background: var(--primary-light);
+  transform: scale(1.01);
 }
 
 #drop-zone svg {
-  margin-bottom: 12px;
-  opacity: 0.5;
+  margin-bottom: 10px;
+  opacity: 0.4;
 }
 
 #drop-zone p {
-  font-size: 0.9rem;
+  font-size: 0.85rem;
 }
 
-#file-input {
+#file-input, #camera-input {
   display: none;
 }
 
-/* Upload Queue */
+/* ===== Action Buttons (Choose / Camera) ===== */
+#action-buttons {
+  display: flex;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+#action-buttons button {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 12px 16px;
+  background: var(--surface);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  font-size: 0.85rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.2s, border-color 0.2s, transform 0.1s;
+  box-shadow: var(--shadow);
+}
+
+#action-buttons button:hover {
+  border-color: var(--primary);
+  background: var(--primary-light);
+}
+
+#action-buttons button:active {
+  transform: scale(0.97);
+}
+
+#action-buttons button svg {
+  opacity: 0.6;
+}
+
+/* ===== Upload Queue ===== */
 #upload-queue {
   margin-top: 16px;
   display: flex;
@@ -154,11 +241,19 @@ body {
   border-radius: var(--radius);
   position: relative;
   overflow: hidden;
+  box-shadow: var(--shadow);
+  transition: transform 0.2s, opacity 0.2s;
+  animation: slideIn 0.2s ease;
+}
+
+@keyframes slideIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
 .file-card .thumb {
-  width: 48px;
-  height: 48px;
+  width: 44px;
+  height: 44px;
   border-radius: 8px;
   object-fit: cover;
   flex-shrink: 0;
@@ -171,7 +266,7 @@ body {
 }
 
 .file-card .name {
-  font-size: 0.85rem;
+  font-size: 0.8rem;
   font-weight: 500;
   white-space: nowrap;
   overflow: hidden;
@@ -179,8 +274,9 @@ body {
 }
 
 .file-card .size {
-  font-size: 0.75rem;
+  font-size: 0.7rem;
   color: var(--text-muted);
+  margin-top: 2px;
 }
 
 .file-card .remove {
@@ -191,10 +287,13 @@ body {
   font-size: 1.25rem;
   padding: 4px 8px;
   line-height: 1;
+  border-radius: 6px;
+  transition: color 0.2s, background 0.2s;
 }
 
 .file-card .remove:hover {
   color: var(--error);
+  background: var(--error-light);
 }
 
 .file-card .progress-bar {
@@ -203,7 +302,7 @@ body {
   left: 0;
   height: 3px;
   background: var(--primary);
-  transition: width 0.3s;
+  transition: width 0.3s ease;
   border-radius: 0 0 var(--radius) var(--radius);
 }
 
@@ -211,9 +310,17 @@ body {
   animation: pulse 1.5s infinite;
 }
 
+.file-card.done {
+  border-color: #bbf7d0;
+}
+
 .file-card.done .progress-bar {
   background: var(--success);
   width: 100% !important;
+}
+
+.file-card.error {
+  border-color: #fecaca;
 }
 
 .file-card.error .progress-bar {
@@ -231,7 +338,7 @@ body {
   50% { opacity: 0.4; }
 }
 
-/* Upload Button */
+/* ===== Upload Button ===== */
 #upload-btn {
   margin-top: 16px;
   width: 100%;
@@ -243,38 +350,54 @@ body {
   font-size: 1rem;
   font-weight: 600;
   cursor: pointer;
-  transition: background 0.2s;
+  transition: background 0.2s, transform 0.1s;
+  box-shadow: var(--shadow-md);
 }
 
 #upload-btn:hover {
   background: var(--primary-hover);
 }
 
-#upload-btn:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
+#upload-btn:active {
+  transform: scale(0.98);
 }
 
-/* Status */
-#status-area {
+#upload-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* ===== Toast Notifications ===== */
+#toast {
   margin-top: 16px;
   padding: 12px 16px;
   border-radius: var(--radius);
-  font-size: 0.9rem;
+  font-size: 0.875rem;
   text-align: center;
+  font-weight: 500;
+  animation: fadeIn 0.3s ease;
 }
 
-#status-area.success {
-  background: #f0fdf4;
+#toast.success {
+  background: var(--success-light);
   color: var(--success);
+  border: 1px solid #bbf7d0;
 }
 
-#status-area.fail {
-  background: #fef2f2;
+#toast.fail {
+  background: var(--error-light);
   color: var(--error);
+  border: 1px solid #fecaca;
 }
 
-/* Upload History */
+#toast.warn {
+  background: #fffbeb;
+  color: #b45309;
+  border: 1px solid #fde68a;
+}
+
+/* ===== Upload History ===== */
 #history-section {
   margin-top: 32px;
   border-top: 1px solid var(--border);
@@ -289,12 +412,17 @@ body {
 }
 
 #history-header h2 {
-  font-size: 1.1rem;
+  font-size: 1rem;
+  font-weight: 600;
 }
 
 #history-count {
-  font-size: 0.85rem;
+  font-size: 0.8rem;
   color: var(--text-muted);
+  background: var(--primary-light);
+  padding: 2px 10px;
+  border-radius: 100px;
+  font-weight: 500;
 }
 
 .history-row {
@@ -307,6 +435,7 @@ body {
   border: 1px solid var(--border);
   border-radius: var(--radius);
   margin-bottom: 6px;
+  box-shadow: var(--shadow);
 }
 
 .history-info {
@@ -316,7 +445,7 @@ body {
 }
 
 .history-name {
-  font-size: 0.85rem;
+  font-size: 0.8rem;
   font-weight: 500;
   white-space: nowrap;
   overflow: hidden;
@@ -324,8 +453,9 @@ body {
 }
 
 .history-meta {
-  font-size: 0.75rem;
+  font-size: 0.7rem;
   color: var(--text-muted);
+  margin-top: 2px;
 }
 
 .history-delete {
@@ -333,16 +463,17 @@ body {
   border: 1px solid var(--border);
   border-radius: 8px;
   color: var(--text-muted);
-  font-size: 0.75rem;
-  padding: 4px 10px;
+  font-size: 0.7rem;
+  padding: 5px 12px;
   cursor: pointer;
   flex-shrink: 0;
-  transition: color 0.2s, border-color 0.2s;
+  transition: color 0.2s, border-color 0.2s, background 0.2s;
 }
 
 .history-delete:hover {
   color: var(--error);
   border-color: var(--error);
+  background: var(--error-light);
 }
 
 .history-delete:disabled {
@@ -358,7 +489,7 @@ body {
   color: var(--text-muted);
   border: 1px solid var(--border);
   border-radius: var(--radius);
-  font-size: 0.85rem;
+  font-size: 0.8rem;
   cursor: pointer;
   transition: color 0.2s, border-color 0.2s;
 }
@@ -368,10 +499,9 @@ body {
   border-color: var(--error);
 }
 
-/* Utilities */
+/* ===== Utilities ===== */
 .hidden { display: none !important; }
 
-/* Fade in animation */
 #upload-section {
   animation: fadeIn 0.3s ease;
 }

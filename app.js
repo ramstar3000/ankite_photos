@@ -15,6 +15,7 @@ const CONFIG = {
 // ===== State =====
 let selectedFiles = [];
 let s3Client = null;
+let toastTimer = null;
 
 // ===== DOM =====
 const $ = (id) => document.getElementById(id);
@@ -25,13 +26,24 @@ const passwordError = $("password-error");
 const uploadSection = $("upload-section");
 const dropZone = $("drop-zone");
 const fileInput = $("file-input");
+const cameraInput = $("camera-input");
+const chooseBtn = $("choose-btn");
+const cameraBtn = $("camera-btn");
 const uploadQueue = $("upload-queue");
 const uploadBtn = $("upload-btn");
-const statusArea = $("status-area");
+const toast = $("toast");
 const historySection = $("history-section");
 const historyCount = $("history-count");
 const historyList = $("history-list");
 const clearHistoryBtn = $("clear-history-btn");
+
+// ===== Toast Notifications =====
+function showToast(message, type = "success", duration = 4000) {
+  clearTimeout(toastTimer);
+  toast.textContent = message;
+  toast.className = type;
+  toastTimer = setTimeout(() => { toast.className = "hidden"; }, duration);
+}
 
 // ===== S3 Client (lazy init) =====
 function getS3Client() {
@@ -61,6 +73,8 @@ passwordForm.addEventListener("submit", (e) => {
     showUploadSection();
   } else {
     passwordError.classList.remove("hidden");
+    passwordForm.classList.add("shake");
+    setTimeout(() => passwordForm.classList.remove("shake"), 400);
     passwordInput.value = "";
     passwordInput.focus();
   }
@@ -73,10 +87,17 @@ function showUploadSection() {
 
 // ===== File Selection =====
 dropZone.addEventListener("click", () => fileInput.click());
+chooseBtn.addEventListener("click", () => fileInput.click());
+cameraBtn.addEventListener("click", () => cameraInput.click());
 
 fileInput.addEventListener("change", () => {
   addFiles(fileInput.files);
   fileInput.value = "";
+});
+
+cameraInput.addEventListener("change", () => {
+  addFiles(cameraInput.files);
+  cameraInput.value = "";
 });
 
 // Drag and drop
@@ -90,14 +111,21 @@ dropZone.addEventListener("drop", (e) => {
 });
 
 function addFiles(fileList) {
+  let skipped = 0;
   for (const file of fileList) {
-    if (!file.type.startsWith("image/") && !file.type.startsWith("video/")) continue;
+    if (!file.type.startsWith("image/") && !file.type.startsWith("video/")) {
+      skipped++;
+      continue;
+    }
     if (file.size > CONFIG.MAX_FILE_SIZE_MB * 1024 * 1024) {
-      alert(`"${file.name}" exceeds ${CONFIG.MAX_FILE_SIZE_MB} MB limit.`);
+      showToast(`"${file.name}" exceeds ${CONFIG.MAX_FILE_SIZE_MB} MB limit`, "warn", 5000);
       continue;
     }
     if (selectedFiles.some((f) => f.name === file.name && f.size === file.size)) continue;
     selectedFiles.push(file);
+  }
+  if (skipped > 0) {
+    showToast(`${skipped} file${skipped > 1 ? "s" : ""} skipped (unsupported format)`, "warn");
   }
   renderQueue();
 }
@@ -120,7 +148,7 @@ function renderQueue() {
       thumb.src = URL.createObjectURL(file);
       thumb.alt = file.name;
     } else {
-      thumb.textContent = "🎬";
+      thumb.textContent = "\uD83C\uDFAC";
       thumb.style.display = "flex";
       thumb.style.alignItems = "center";
       thumb.style.justifyContent = "center";
@@ -133,7 +161,7 @@ function renderQueue() {
 
     const removeBtn = document.createElement("button");
     removeBtn.className = "remove";
-    removeBtn.textContent = "×";
+    removeBtn.textContent = "\u00D7";
     removeBtn.addEventListener("click", (e) => { e.stopPropagation(); removeFile(i); });
 
     const progressBar = document.createElement("div");
@@ -150,8 +178,6 @@ function renderQueue() {
   } else {
     uploadBtn.classList.add("hidden");
   }
-
-  statusArea.classList.add("hidden");
 }
 
 // ===== Upload =====
@@ -187,7 +213,7 @@ async function uploadAll() {
           card.classList.add("done");
           const icon = document.createElement("span");
           icon.className = "status-icon";
-          icon.textContent = "✓";
+          icon.textContent = "\u2713";
           icon.style.color = "var(--success)";
           card.querySelector(".remove")?.replaceWith(icon);
           successCount++;
@@ -196,7 +222,7 @@ async function uploadAll() {
           card.classList.add("error");
           const icon = document.createElement("span");
           icon.className = "status-icon";
-          icon.textContent = "✗";
+          icon.textContent = "\u2717";
           icon.style.color = "var(--error)";
           card.querySelector(".remove")?.replaceWith(icon);
           console.error(`Upload failed for ${file.name}:`, err);
@@ -207,16 +233,17 @@ async function uploadAll() {
 
   await Promise.all(workers);
 
-  // Show status
-  statusArea.classList.remove("hidden", "success", "fail");
   if (errorCount === 0) {
-    statusArea.classList.add("success");
-    statusArea.textContent = `All ${successCount} file${successCount > 1 ? "s" : ""} uploaded successfully!`;
+    showToast(`${successCount} file${successCount > 1 ? "s" : ""} uploaded successfully!`, "success", 5000);
     selectedFiles = [];
-    uploadBtn.classList.add("hidden");
+    // Clear queue after a short delay so user sees the green checkmarks
+    setTimeout(() => {
+      uploadQueue.innerHTML = "";
+      uploadBtn.classList.add("hidden");
+      uploadBtn.disabled = false;
+    }, 2000);
   } else {
-    statusArea.classList.add("fail");
-    statusArea.textContent = `${successCount} uploaded, ${errorCount} failed. Please try again.`;
+    showToast(`${successCount} uploaded, ${errorCount} failed. Please try again.`, "fail", 8000);
     uploadBtn.disabled = false;
     uploadBtn.textContent = "Retry failed";
   }
@@ -258,7 +285,7 @@ function renderHistory() {
   }
 
   historySection.classList.remove("hidden");
-  historyCount.textContent = `${history.length} file${history.length !== 1 ? "s" : ""}`;
+  historyCount.textContent = `${history.length}`;
 
   historyList.innerHTML = "";
   history.forEach((entry, i) => {
@@ -268,7 +295,7 @@ function renderHistory() {
     const info = document.createElement("div");
     info.className = "history-info";
     const date = new Date(entry.uploadedAt);
-    info.innerHTML = `<span class="history-name">${escapeHtml(entry.name)}</span><span class="history-meta">${formatSize(entry.size)} &middot; ${formatDate(date)}</span>`;
+    info.innerHTML = `<span class="history-name">${escapeHtml(entry.name)}</span><span class="history-meta">${formatSize(entry.size)} \u00B7 ${formatDate(date)}</span>`;
 
     const deleteBtn = document.createElement("button");
     deleteBtn.className = "history-delete";
@@ -298,6 +325,7 @@ async function deleteUpload(index, key) {
   history.splice(index, 1);
   localStorage.setItem("photo_uploads", JSON.stringify(history));
   renderHistory();
+  showToast("File removed", "success", 3000);
 }
 
 clearHistoryBtn.addEventListener("click", () => {
