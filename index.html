@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Upload Photos</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div id="app">
+
+    <!-- Password Gate -->
+    <div id="password-section">
+      <h1>Welcome!</h1>
+      <p>Enter the code to upload your photos</p>
+      <form id="password-form">
+        <input type="password" id="password-input" placeholder="Enter code" autocomplete="off">
+        <button type="submit">Enter</button>
+      </form>
+      <p id="password-error" class="error hidden">Incorrect code, please try again.</p>
+    </div>
+
+    <!-- Upload Area -->
+    <div id="upload-section" class="hidden">
+      <div id="event-info">
+        <h1>Share Your Photos</h1>
+        <p>Thank you for being part of this special day! Upload your photos and videos below so we can treasure these memories together.</p>
+      </div>
+
+      <div id="drop-zone">
+        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+          <polyline points="17 8 12 3 7 8"/>
+          <line x1="12" y1="3" x2="12" y2="15"/>
+        </svg>
+        <p>Drag & drop photos here, or tap to select</p>
+        <input type="file" id="file-input" multiple accept="image/*,video/*">
+      </div>
+
+      <div id="upload-queue"></div>
+
+      <button id="upload-btn" class="hidden">Upload</button>
+
+      <div id="status-area" class="hidden"></div>
+    </div>
+
+  </div>
+
+  <script type="importmap">
+  {
+    "imports": {
+      "@aws-sdk/client-s3": "https://esm.sh/@aws-sdk/client-s3",
+      "@aws-sdk/credential-providers": "https://esm.sh/@aws-sdk/credential-providers"
+    }
+  }
+  </script>
+  <script type="module" src="app.js"></script>
+</body>
+</html>

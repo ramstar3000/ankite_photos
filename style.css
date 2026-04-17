@@ -1,0 +1,288 @@
+:root {
+  --primary: #4f46e5;
+  --primary-hover: #4338ca;
+  --success: #16a34a;
+  --error: #dc2626;
+  --bg: #fafafa;
+  --surface: #ffffff;
+  --text: #1f2937;
+  --text-muted: #6b7280;
+  --border: #e5e7eb;
+  --radius: 12px;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100dvh;
+  display: flex;
+  justify-content: center;
+}
+
+#app {
+  width: 100%;
+  max-width: 480px;
+  padding: 24px 16px;
+}
+
+/* Password Gate */
+#password-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 80dvh;
+  text-align: center;
+}
+
+#password-section h1 {
+  font-size: 1.75rem;
+  margin-bottom: 8px;
+}
+
+#password-section p {
+  color: var(--text-muted);
+  margin-bottom: 24px;
+}
+
+#password-form {
+  display: flex;
+  gap: 8px;
+  width: 100%;
+  max-width: 320px;
+}
+
+#password-input {
+  flex: 1;
+  padding: 12px 16px;
+  border: 2px solid var(--border);
+  border-radius: var(--radius);
+  font-size: 1rem;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+#password-input:focus {
+  border-color: var(--primary);
+}
+
+#password-form button {
+  padding: 12px 24px;
+  background: var(--primary);
+  color: white;
+  border: none;
+  border-radius: var(--radius);
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+#password-form button:hover {
+  background: var(--primary-hover);
+}
+
+.error {
+  color: var(--error);
+  font-size: 0.875rem;
+  margin-top: 12px;
+}
+
+/* Upload Section */
+#event-info {
+  text-align: center;
+  margin-bottom: 24px;
+}
+
+#event-info h1 {
+  font-size: 1.5rem;
+  margin-bottom: 8px;
+}
+
+#event-info p {
+  color: var(--text-muted);
+  line-height: 1.5;
+}
+
+/* Drop Zone */
+#drop-zone {
+  border: 2px dashed var(--border);
+  border-radius: var(--radius);
+  padding: 40px 20px;
+  text-align: center;
+  cursor: pointer;
+  transition: border-color 0.2s, background 0.2s;
+  color: var(--text-muted);
+}
+
+#drop-zone.dragover {
+  border-color: var(--primary);
+  background: #eef2ff;
+}
+
+#drop-zone svg {
+  margin-bottom: 12px;
+  opacity: 0.5;
+}
+
+#drop-zone p {
+  font-size: 0.9rem;
+}
+
+#file-input {
+  display: none;
+}
+
+/* Upload Queue */
+#upload-queue {
+  margin-top: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.file-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  position: relative;
+  overflow: hidden;
+}
+
+.file-card .thumb {
+  width: 48px;
+  height: 48px;
+  border-radius: 8px;
+  object-fit: cover;
+  flex-shrink: 0;
+  background: var(--bg);
+}
+
+.file-card .info {
+  flex: 1;
+  min-width: 0;
+}
+
+.file-card .name {
+  font-size: 0.85rem;
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.file-card .size {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+.file-card .remove {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  font-size: 1.25rem;
+  padding: 4px 8px;
+  line-height: 1;
+}
+
+.file-card .remove:hover {
+  color: var(--error);
+}
+
+.file-card .progress-bar {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  height: 3px;
+  background: var(--primary);
+  transition: width 0.3s;
+  border-radius: 0 0 var(--radius) var(--radius);
+}
+
+.file-card.uploading .progress-bar {
+  animation: pulse 1.5s infinite;
+}
+
+.file-card.done .progress-bar {
+  background: var(--success);
+  width: 100% !important;
+}
+
+.file-card.error .progress-bar {
+  background: var(--error);
+  width: 100% !important;
+}
+
+.file-card .status-icon {
+  font-size: 1.1rem;
+  flex-shrink: 0;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+
+/* Upload Button */
+#upload-btn {
+  margin-top: 16px;
+  width: 100%;
+  padding: 14px;
+  background: var(--primary);
+  color: white;
+  border: none;
+  border-radius: var(--radius);
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+#upload-btn:hover {
+  background: var(--primary-hover);
+}
+
+#upload-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Status */
+#status-area {
+  margin-top: 16px;
+  padding: 12px 16px;
+  border-radius: var(--radius);
+  font-size: 0.9rem;
+  text-align: center;
+}
+
+#status-area.success {
+  background: #f0fdf4;
+  color: var(--success);
+}
+
+#status-area.fail {
+  background: #fef2f2;
+  color: var(--error);
+}
+
+/* Utilities */
+.hidden { display: none !important; }
+
+/* Fade in animation */
+#upload-section {
+  animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
