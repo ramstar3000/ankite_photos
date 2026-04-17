@@ -1,4 +1,4 @@
-import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
+import { S3Client, PutObjectCommand, DeleteObjectCommand } from "@aws-sdk/client-s3";
 import { fromCognitoIdentityPool } from "@aws-sdk/credential-providers";
 
 // ===== CONFIGURATION — edit these values =====
@@ -27,6 +27,10 @@ const fileInput = $("file-input");
 const uploadQueue = $("upload-queue");
 const uploadBtn = $("upload-btn");
 const statusArea = $("status-area");
+const historySection = $("history-section");
+const historyCount = $("history-count");
+const historyList = $("history-list");
+const clearHistoryBtn = $("clear-history-btn");
 
 // ===== S3 Client (lazy init) =====
 function getS3Client() {
@@ -226,7 +230,79 @@ async function uploadFile(file) {
     ContentType: file.type,
   });
   await getS3Client().send(command);
+  saveToHistory({ name: file.name, size: file.size, key, uploadedAt: new Date().toISOString() });
 }
+
+// ===== Upload History (localStorage) =====
+function getHistory() {
+  try {
+    return JSON.parse(localStorage.getItem("photo_uploads") || "[]");
+  } catch {
+    return [];
+  }
+}
+
+function saveToHistory(entry) {
+  const history = getHistory();
+  history.unshift(entry);
+  localStorage.setItem("photo_uploads", JSON.stringify(history));
+  renderHistory();
+}
+
+function renderHistory() {
+  const history = getHistory();
+  if (history.length === 0) {
+    historySection.classList.add("hidden");
+    return;
+  }
+
+  historySection.classList.remove("hidden");
+  historyCount.textContent = `${history.length} file${history.length !== 1 ? "s" : ""}`;
+
+  historyList.innerHTML = "";
+  history.forEach((entry, i) => {
+    const row = document.createElement("div");
+    row.className = "history-row";
+
+    const info = document.createElement("div");
+    info.className = "history-info";
+    const date = new Date(entry.uploadedAt);
+    info.innerHTML = `<span class="history-name">${escapeHtml(entry.name)}</span><span class="history-meta">${formatSize(entry.size)} &middot; ${formatDate(date)}</span>`;
+
+    const deleteBtn = document.createElement("button");
+    deleteBtn.className = "history-delete";
+    deleteBtn.textContent = "Remove";
+    deleteBtn.addEventListener("click", () => deleteUpload(i, entry.key));
+
+    row.append(info, deleteBtn);
+    historyList.appendChild(row);
+  });
+
+  clearHistoryBtn.classList.toggle("hidden", history.length < 2);
+}
+
+async function deleteUpload(index, key) {
+  const row = historyList.children[index];
+  const btn = row.querySelector(".history-delete");
+  btn.textContent = "Removing...";
+  btn.disabled = true;
+
+  try {
+    await getS3Client().send(new DeleteObjectCommand({ Bucket: CONFIG.BUCKET, Key: key }));
+  } catch (err) {
+    console.warn("S3 delete failed (file may already be gone):", err);
+  }
+
+  const history = getHistory();
+  history.splice(index, 1);
+  localStorage.setItem("photo_uploads", JSON.stringify(history));
+  renderHistory();
+}
+
+clearHistoryBtn.addEventListener("click", () => {
+  localStorage.removeItem("photo_uploads");
+  renderHistory();
+});
 
 // ===== Helpers =====
 function sanitizeFilename(name) {
@@ -239,6 +315,17 @@ function formatSize(bytes) {
   return (bytes / (1024 * 1024)).toFixed(1) + " MB";
 }
 
+function formatDate(date) {
+  const now = new Date();
+  const diffMs = now - date;
+  const diffMins = Math.floor(diffMs / 60000);
+  if (diffMins < 1) return "Just now";
+  if (diffMins < 60) return `${diffMins}m ago`;
+  const diffHours = Math.floor(diffMins / 60);
+  if (diffHours < 24) return `${diffHours}h ago`;
+  return date.toLocaleDateString(undefined, { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" });
+}
+
 function escapeHtml(str) {
   const div = document.createElement("div");
   div.textContent = str;
@@ -247,3 +334,4 @@ function escapeHtml(str) {
 
 // ===== Init =====
 checkSession();
+renderHistory();
