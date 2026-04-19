@@ -193,23 +193,3 @@
   padding: 8px 16px 24px;
 }
 
-.danger-btn {
-  background: none;
-  border: 1px solid rgba(255,255,255,0.2);
-  color: rgba(255,255,255,0.6);
-  padding: 6px 16px;
-  border-radius: 8px;
-  font-size: 0.75rem;
-  cursor: pointer;
-  transition: color 0.2s, border-color 0.2s;
-}
-
-.danger-btn:hover {
-  color: var(--error);
-  border-color: var(--error);
-}
-
-.danger-btn:disabled {
-  opacity: 0.4;
-  cursor: not-allowed;
-}

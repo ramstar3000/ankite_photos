@@ -26,7 +26,6 @@ var lightboxMeta = document.getElementById("lightbox-meta");
 var lightboxClose = document.getElementById("lightbox-close");
 var lightboxPrev = document.getElementById("lightbox-prev");
 var lightboxNext = document.getElementById("lightbox-next");
-var lightboxDelete = document.getElementById("lightbox-delete");
 
 // History helpers
 function getHistory() {
@@ -139,9 +138,6 @@ function openLightbox(index) {
   lightboxPrev.style.display = index > 0 ? "" : "none";
   lightboxNext.style.display = index < history.length - 1 ? "" : "none";
 
-  lightboxDelete.disabled = false;
-  lightboxDelete.textContent = "Remove Photo";
-
   lightbox.classList.remove("hidden");
   document.body.style.overflow = "hidden";
 }
@@ -178,27 +174,6 @@ document.addEventListener("keydown", function(e) {
   if (e.key === "Escape") closeLightbox();
   if (e.key === "ArrowLeft") lightboxPrev.click();
   if (e.key === "ArrowRight") lightboxNext.click();
-});
-
-// Delete from lightbox
-lightboxDelete.addEventListener("click", function(e) {
-  e.stopPropagation();
-  var history = getHistory();
-  if (currentIndex < 0 || currentIndex >= history.length) return;
-
-  var entry = history[currentIndex];
-  lightboxDelete.textContent = "Removing...";
-  lightboxDelete.disabled = true;
-
-  s3.deleteObject({ Bucket: CONFIG.BUCKET, Key: entry.key }, function(err) {
-    if (err) console.warn("S3 delete failed:", err);
-
-    history.splice(currentIndex, 1);
-    localStorage.setItem("photo_uploads", JSON.stringify(history));
-
-    closeLightbox();
-    renderGrid();
-  });
 });
 
 // Init

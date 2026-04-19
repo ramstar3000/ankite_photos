@@ -62,14 +62,14 @@ aws iam put-role-policy \
     "Statement": [
       {
         "Effect": "Allow",
-        "Action": ["s3:PutObject", "s3:DeleteObject"],
+        "Action": ["s3:PutObject", "s3:GetObject"],
         "Resource": "arn:aws:s3:::ankita-photos-upload/uploads/*"
       }
     ]
   }'
 ```
 
-> This allows uploading and deleting within the `uploads/` prefix only. No read or list.
+> This allows uploading and viewing within the `uploads/` prefix only. No list or delete.
 
 ## 4. Update app.js
 
