@@ -101,18 +101,26 @@ function renderGrid() {
       loading.textContent = "Loading...";
       tile.appendChild(loading);
 
-      // Load image via presigned URL
+      // Load image via presigned URL — set src after handlers are attached
       var img = document.createElement("img");
       img.alt = entry.name;
       img.loading = "lazy";
-      img.onload = function() {
-        if (loading.parentNode) loading.parentNode.removeChild(loading);
-      };
-      img.onerror = function() {
-        loading.textContent = "Failed";
-      };
-      img.src = getSignedUrl(entry.key);
+      img.style.opacity = "0";
+      img.style.transition = "opacity 0.3s";
       tile.appendChild(img);
+
+      (function(imgEl, loadingEl, key) {
+        var url = getSignedUrl(key);
+        imgEl.onload = function() {
+          imgEl.style.opacity = "1";
+          if (loadingEl.parentNode) loadingEl.parentNode.removeChild(loadingEl);
+        };
+        imgEl.onerror = function() {
+          loadingEl.textContent = "Failed";
+          imgEl.style.display = "none";
+        };
+        imgEl.src = url;
+      })(img, loading, entry.key);
     }
 
     tile.addEventListener("click", (function(idx) {
@@ -176,5 +184,12 @@ document.addEventListener("keydown", function(e) {
   if (e.key === "ArrowRight") lightboxNext.click();
 });
 
-// Init
-renderGrid();
+// Init — wait for Cognito credentials before rendering
+AWS.config.credentials.get(function(err) {
+  if (err) {
+    console.error("Failed to get credentials:", err);
+    viewerCount.textContent = "Failed to load credentials. Please refresh.";
+    return;
+  }
+  renderGrid();
+});
