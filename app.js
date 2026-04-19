@@ -49,9 +49,20 @@ function showToast(message, type, duration) {
   toastTimer = setTimeout(function() { toast.className = "hidden"; }, duration);
 }
 
+// ===== Landing Page =====
+var landingSection = $("landing-section");
+var landingContinue = $("landing-continue");
+
+landingContinue.addEventListener("click", function() {
+  landingSection.classList.add("hidden");
+  passwordSection.classList.remove("hidden");
+  passwordInput.focus();
+});
+
 // ===== Password Gate =====
 function checkSession() {
   if (sessionStorage.getItem("photo_auth") === "true") {
+    landingSection.classList.add("hidden");
     showUploadSection();
   }
 }
