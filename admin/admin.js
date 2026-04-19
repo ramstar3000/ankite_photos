@@ -1,4 +1,4 @@
-// CONFIG is loaded from config.js
+// CONFIG is loaded from ../config.js
 
 // AWS Setup
 AWS.config.region = CONFIG.REGION;
@@ -9,11 +9,18 @@ var s3 = new AWS.S3({ apiVersion: "2006-03-01" });
 
 // State
 var currentIndex = -1;
+var photoList = [];
 
 // DOM
+var adminLogin = document.getElementById("admin-login");
+var adminForm = document.getElementById("admin-form");
+var adminInput = document.getElementById("admin-input");
+var adminError = document.getElementById("admin-error");
+var adminPanel = document.getElementById("admin-panel");
 var photoGrid = document.getElementById("photo-grid");
 var emptyState = document.getElementById("empty-state");
 var viewerCount = document.getElementById("viewer-count");
+var viewerLoading = document.getElementById("viewer-loading");
 var lightbox = document.getElementById("lightbox");
 var lightboxImg = document.getElementById("lightbox-img");
 var lightboxName = document.getElementById("lightbox-name");
@@ -21,16 +28,89 @@ var lightboxMeta = document.getElementById("lightbox-meta");
 var lightboxClose = document.getElementById("lightbox-close");
 var lightboxPrev = document.getElementById("lightbox-prev");
 var lightboxNext = document.getElementById("lightbox-next");
+var lightboxDelete = document.getElementById("lightbox-delete");
 
-// History helpers
-function getHistory() {
-  try {
-    return JSON.parse(localStorage.getItem("photo_uploads") || "[]");
-  } catch (e) {
-    return [];
+// ===== Admin Login =====
+function checkAdminSession() {
+  if (sessionStorage.getItem("photo_admin") === "true") {
+    showAdminPanel();
   }
 }
 
+adminForm.addEventListener("submit", function(e) {
+  e.preventDefault();
+  if (adminInput.value === CONFIG.PASSWORD_ADMIN) {
+    sessionStorage.setItem("photo_admin", "true");
+    showAdminPanel();
+  } else {
+    adminError.classList.remove("hidden");
+    adminForm.classList.add("shake");
+    setTimeout(function() { adminForm.classList.remove("shake"); }, 400);
+    adminInput.value = "";
+    adminInput.focus();
+  }
+});
+
+function showAdminPanel() {
+  adminLogin.classList.add("hidden");
+  adminPanel.classList.remove("hidden");
+  loadPhotos();
+}
+
+// ===== Load all photos from S3 =====
+function loadPhotos() {
+  viewerLoading.classList.remove("hidden");
+
+  AWS.config.credentials.get(function(err) {
+    if (err) {
+      console.error("Failed to get credentials:", err);
+      viewerCount.textContent = "Failed to load credentials. Please refresh.";
+      viewerLoading.classList.add("hidden");
+      return;
+    }
+    listAllObjects([], null, function(objects) {
+      viewerLoading.classList.add("hidden");
+      objects.sort(function(a, b) { return b.Key.localeCompare(a.Key); });
+      photoList = objects.map(function(obj) {
+        var parts = obj.Key.replace(CONFIG.PREFIX, "").split("-");
+        var name = parts.length > 2 ? parts.slice(2).join("-") : obj.Key;
+        return {
+          key: obj.Key,
+          name: name,
+          size: obj.Size,
+          lastModified: obj.LastModified,
+        };
+      });
+      renderGrid();
+    });
+  });
+}
+
+function listAllObjects(accumulated, continuationToken, callback) {
+  var params = {
+    Bucket: CONFIG.BUCKET,
+    Prefix: CONFIG.PREFIX,
+    MaxKeys: 1000,
+  };
+  if (continuationToken) {
+    params.ContinuationToken = continuationToken;
+  }
+  s3.listObjectsV2(params, function(err, data) {
+    if (err) {
+      console.error("Failed to list objects:", err);
+      callback(accumulated);
+      return;
+    }
+    var objects = accumulated.concat(data.Contents || []);
+    if (data.IsTruncated) {
+      listAllObjects(objects, data.NextContinuationToken, callback);
+    } else {
+      callback(objects);
+    }
+  });
+}
+
+// ===== Helpers =====
 function formatSize(bytes) {
   if (bytes < 1024) return bytes + " B";
   if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + " KB";
@@ -52,11 +132,9 @@ function getSignedUrl(key) {
   });
 }
 
-// Render grid
+// ===== Render grid =====
 function renderGrid() {
-  var history = getHistory();
-
-  if (history.length === 0) {
+  if (photoList.length === 0) {
     emptyState.classList.remove("hidden");
     photoGrid.innerHTML = "";
     viewerCount.textContent = "";
@@ -64,10 +142,10 @@ function renderGrid() {
   }
 
   emptyState.classList.add("hidden");
-  viewerCount.textContent = history.length + " photo" + (history.length !== 1 ? "s" : "") + " from this device";
+  viewerCount.textContent = photoList.length + " photos in bucket";
 
   photoGrid.innerHTML = "";
-  history.forEach(function(entry, i) {
+  photoList.forEach(function(entry, i) {
     var tile = document.createElement("div");
     tile.className = "photo-tile";
 
@@ -92,7 +170,7 @@ function renderGrid() {
       tile.appendChild(loading);
 
       var img = document.createElement("img");
-      img.alt = entry.name;
+      img.alt = fileName;
       img.loading = "lazy";
       img.style.opacity = "0";
       img.style.transition = "opacity 0.3s";
@@ -120,24 +198,26 @@ function renderGrid() {
   });
 }
 
-// Lightbox
+// ===== Lightbox =====
 function openLightbox(index) {
-  var history = getHistory();
-  if (index < 0 || index >= history.length) return;
+  if (index < 0 || index >= photoList.length) return;
 
   currentIndex = index;
-  var entry = history[index];
+  var entry = photoList[index];
 
   lightboxImg.src = getSignedUrl(entry.key);
-  lightboxName.textContent = entry.name;
+  lightboxName.textContent = entry.name || entry.key;
 
   var metaParts = [];
   if (entry.size) metaParts.push(formatSize(entry.size));
-  if (entry.uploadedAt) metaParts.push(formatDate(new Date(entry.uploadedAt)));
+  if (entry.lastModified) metaParts.push(formatDate(new Date(entry.lastModified)));
   lightboxMeta.textContent = metaParts.join(" \u00B7 ");
 
   lightboxPrev.style.display = index > 0 ? "" : "none";
-  lightboxNext.style.display = index < history.length - 1 ? "" : "none";
+  lightboxNext.style.display = index < photoList.length - 1 ? "" : "none";
+
+  lightboxDelete.disabled = false;
+  lightboxDelete.textContent = "Delete Photo";
 
   lightbox.classList.remove("hidden");
   document.body.style.overflow = "hidden";
@@ -165,8 +245,7 @@ lightboxPrev.addEventListener("click", function(e) {
 
 lightboxNext.addEventListener("click", function(e) {
   e.stopPropagation();
-  var history = getHistory();
-  if (currentIndex < history.length - 1) openLightbox(currentIndex + 1);
+  if (currentIndex < photoList.length - 1) openLightbox(currentIndex + 1);
 });
 
 document.addEventListener("keydown", function(e) {
@@ -176,12 +255,28 @@ document.addEventListener("keydown", function(e) {
   if (e.key === "ArrowRight") lightboxNext.click();
 });
 
-// Init
-AWS.config.credentials.get(function(err) {
-  if (err) {
-    console.error("Failed to get credentials:", err);
-    viewerCount.textContent = "Failed to load credentials. Please refresh.";
-    return;
-  }
-  renderGrid();
+// ===== Delete =====
+lightboxDelete.addEventListener("click", function(e) {
+  e.stopPropagation();
+  if (currentIndex < 0 || currentIndex >= photoList.length) return;
+
+  var entry = photoList[currentIndex];
+  lightboxDelete.textContent = "Deleting...";
+  lightboxDelete.disabled = true;
+
+  s3.deleteObject({ Bucket: CONFIG.BUCKET, Key: entry.key }, function(err) {
+    if (err) {
+      console.error("Delete failed:", err);
+      lightboxDelete.textContent = "Failed - try again";
+      lightboxDelete.disabled = false;
+      return;
+    }
+
+    photoList.splice(currentIndex, 1);
+    closeLightbox();
+    renderGrid();
+  });
 });
+
+// ===== Init =====
+checkAdminSession();

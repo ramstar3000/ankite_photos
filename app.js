@@ -61,12 +61,8 @@ function checkSession() {
 
 passwordForm.addEventListener("submit", function(e) {
   e.preventDefault();
-  var val = passwordInput.value;
-  if (val === CONFIG.PASSWORD || val === CONFIG.PASSWORD_ADMIN) {
+  if (passwordInput.value === CONFIG.PASSWORD) {
     sessionStorage.setItem("photo_auth", "true");
-    if (val === CONFIG.PASSWORD_ADMIN) {
-      sessionStorage.setItem("photo_admin", "true");
-    }
     showUploadSection();
   } else {
     passwordError.classList.remove("hidden");

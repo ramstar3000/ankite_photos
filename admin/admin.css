@@ -1,0 +1,79 @@
+#admin-login {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 80dvh;
+  text-align: center;
+}
+
+#admin-login .lock-icon {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+#admin-login h1 {
+  font-size: 1.75rem;
+  font-weight: 700;
+  margin-bottom: 6px;
+  letter-spacing: -0.02em;
+}
+
+#admin-login p {
+  color: var(--text-muted);
+  margin-bottom: 28px;
+  font-size: 0.95rem;
+}
+
+#admin-form {
+  display: flex;
+  gap: 8px;
+  width: 100%;
+  max-width: 320px;
+}
+
+#admin-input {
+  flex: 1;
+  padding: 14px 16px;
+  border: 2px solid var(--border);
+  border-radius: var(--radius);
+  font-size: 1rem;
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  background: var(--surface);
+}
+
+#admin-input:focus {
+  border-color: #b45309;
+  box-shadow: 0 0 0 3px rgba(180, 83, 9, 0.1);
+}
+
+#admin-form button {
+  padding: 14px 24px;
+  background: #b45309;
+  color: white;
+  border: none;
+  border-radius: var(--radius);
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s, transform 0.1s;
+}
+
+#admin-form button:hover {
+  background: #92400e;
+}
+
+#admin-form button:active {
+  transform: scale(0.97);
+}
+
+#admin-form.shake {
+  animation: shake 0.4s ease;
+}
+
+.admin-header-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
