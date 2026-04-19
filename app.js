@@ -37,8 +37,7 @@ const uploadBtn = $("upload-btn");
 const toast = $("toast");
 const historySection = $("history-section");
 const historyCount = $("history-count");
-const historyList = $("history-list");
-const clearHistoryBtn = $("clear-history-btn");
+const historyLatest = $("history-latest");
 
 // ===== Toast Notifications =====
 function showToast(message, type, duration) {
@@ -287,53 +286,11 @@ function renderHistory() {
   }
 
   historySection.classList.remove("hidden");
-  historyCount.textContent = history.length;
+  historyCount.textContent = history.length + " photo" + (history.length !== 1 ? "s" : "") + " uploaded";
 
-  historyList.innerHTML = "";
-  history.forEach(function(entry, i) {
-    var row = document.createElement("div");
-    row.className = "history-row";
-
-    var info = document.createElement("div");
-    info.className = "history-info";
-    var date = new Date(entry.uploadedAt);
-    info.innerHTML = '<span class="history-name">' + escapeHtml(entry.name) + '</span><span class="history-meta">' + formatSize(entry.size) + " \u00B7 " + formatDate(date) + "</span>";
-
-    var deleteBtn = document.createElement("button");
-    deleteBtn.className = "history-delete";
-    deleteBtn.textContent = "Remove";
-    deleteBtn.addEventListener("click", (function(idx, key) {
-      return function() { deleteUpload(idx, key); };
-    })(i, entry.key));
-
-    row.append(info, deleteBtn);
-    historyList.appendChild(row);
-  });
-
-  clearHistoryBtn.classList.toggle("hidden", history.length < 2);
+  var latest = new Date(history[0].uploadedAt);
+  historyLatest.textContent = "Last upload: " + formatDate(latest);
 }
-
-function deleteUpload(index, key) {
-  var row = historyList.children[index];
-  var btn = row.querySelector(".history-delete");
-  btn.textContent = "Removing...";
-  btn.disabled = true;
-
-  s3.deleteObject({ Bucket: CONFIG.BUCKET, Key: key }, function(err) {
-    if (err) console.warn("S3 delete failed (file may already be gone):", err);
-
-    var history = getHistory();
-    history.splice(index, 1);
-    localStorage.setItem("photo_uploads", JSON.stringify(history));
-    renderHistory();
-    showToast("File removed", "success", 3000);
-  });
-}
-
-clearHistoryBtn.addEventListener("click", function() {
-  localStorage.removeItem("photo_uploads");
-  renderHistory();
-});
 
 // ===== Helpers =====
 function sanitizeFilename(name) {
