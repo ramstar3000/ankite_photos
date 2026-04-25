@@ -124,7 +124,16 @@ aws s3api put-bucket-cors --bucket ankita-photos-upload --cors-configuration fil
 
 ## 8. Generate QR Code
 
-Use any QR code generator (e.g., https://www.qrcode-monkey.com/) with your GitHub Pages URL. Save the image for printing/sharing.
+Use any QR code generator (e.g., https://www.qrcode-monkey.com/) with your GitHub Pages URL.
+
+**For auto-fill password feature:** Add the password as a URL parameter:
+```
+https://ramstar3000.github.io/ankita_photos/?code=your-password-here
+```
+
+When guests scan this QR code, the password will auto-fill and the form will automatically submit, taking them directly to the upload screen.
+
+Save the QR code image for printing/sharing.
 
 ## Troubleshooting
 

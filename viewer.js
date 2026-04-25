@@ -31,6 +31,14 @@ function getHistory() {
   }
 }
 
+function removeFromHistory(key) {
+  var history = getHistory();
+  var filtered = history.filter(function(entry) { return entry.key !== key; });
+  if (filtered.length !== history.length) {
+    localStorage.setItem("photo_uploads", JSON.stringify(filtered));
+  }
+}
+
 function formatSize(bytes) {
   if (bytes < 1024) return bytes + " B";
   if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + " KB";
@@ -105,8 +113,8 @@ function renderGrid() {
           if (loadingEl.parentNode) loadingEl.parentNode.removeChild(loadingEl);
         };
         imgEl.onerror = function() {
-          loadingEl.textContent = "Failed";
-          imgEl.style.display = "none";
+          removeFromHistory(key);
+          renderGrid();
         };
         imgEl.src = url;
       })(img, loading, entry.key);

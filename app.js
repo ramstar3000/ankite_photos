@@ -59,6 +59,16 @@ function checkSession() {
   }
 }
 
+function tryAutoFill() {
+  var params = new URLSearchParams(window.location.search);
+  var codeParam = params.get("code");
+  if (codeParam && codeParam === CONFIG.PASSWORD) {
+    sessionStorage.setItem("photo_auth", "true");
+    landingSection.classList.add("hidden");
+    showUploadSection();
+  }
+}
+
 passwordForm.addEventListener("submit", function(e) {
   e.preventDefault();
   if (passwordInput.value === CONFIG.PASSWORD) {
@@ -427,5 +437,6 @@ function escapeHtml(str) {
 }
 
 // ===== Init =====
+tryAutoFill();
 checkSession();
 renderHistory();
