@@ -47,8 +47,12 @@ var landingContinue = $("landing-continue");
 
 landingContinue.addEventListener("click", function() {
   landingSection.classList.add("hidden");
-  passwordSection.classList.remove("hidden");
-  passwordInput.focus();
+  if (sessionStorage.getItem("photo_auth") === "true") {
+    showUploadSection();
+  } else {
+    passwordSection.classList.remove("hidden");
+    passwordInput.focus();
+  }
 });
 
 // ===== Password Gate =====
@@ -64,8 +68,6 @@ function tryAutoFill() {
   var codeParam = params.get("code");
   if (codeParam && codeParam === CONFIG.PASSWORD) {
     sessionStorage.setItem("photo_auth", "true");
-    landingSection.classList.add("hidden");
-    showUploadSection();
   }
 }
 
