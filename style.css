@@ -234,6 +234,20 @@ body {
   font-size: 0.9rem;
 }
 
+.welcome-message {
+  background: var(--primary-light);
+  padding: 12px 14px;
+  border-radius: var(--radius);
+  margin-bottom: 16px;
+}
+
+.welcome-message p {
+  color: var(--primary);
+  font-size: 0.85rem;
+  line-height: 1.6;
+  font-weight: 500;
+}
+
 /* ===== Drop Zone ===== */
 #drop-zone {
   border: 2px dashed var(--border);
